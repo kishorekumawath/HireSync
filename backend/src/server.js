@@ -2,10 +2,23 @@ import express from "express";
 import ENV from "./lib/env.js";
 import path from "path";
 import connectDB from "./lib/db.js";
+import cors from "cors";
+import { serve } from "inngest/express";
+import { inngest } from "./lib/inngest.js";
+import { functions } from "./lib/inngest.js";
 
 const app = express();
 
 const __dirname = path.resolve();
+
+app.use(express.json()); // used for parsing json data from incoming requests 
+// why credentials: true because sever allows to browser to include cookies in the request
+app.use(cors({
+    origin: ENV.CLIENT_URL,
+    credentials: true
+}));
+
+app.use('/api/inngest', serve({ client: inngest, functions }));
 
 app.get("/test", (req, res) => {
     res.status(200).json({
