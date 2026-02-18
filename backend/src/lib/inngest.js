@@ -5,7 +5,7 @@ import User from "../models/user.js";
 
 
 export const inngest = new Inngest({
-    name: "HireSync",
+    id: "HireSync",
 });
 
 const syncUser = inngest.createFunction(
