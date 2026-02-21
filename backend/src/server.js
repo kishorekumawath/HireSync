@@ -6,6 +6,8 @@ import cors from "cors";
 import { serve } from "inngest/express";
 import { inngest } from "./lib/inngest.js";
 import { functions } from "./lib/inngest.js";
+import { clerkMiddleware } from "@clerk/express";
+import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
 
@@ -17,18 +19,23 @@ app.use(cors({
     origin: ENV.CLIENT_URL,
     credentials: true
 }));
+app.use(clerkMiddleware()); // this middleware will protect all the routes that are coming after this middleware
 
 app.use('/api/inngest', serve({ client: inngest, functions }));
 
-app.get("/test", (req, res) => {
-    res.status(200).json({
-        message: "this is the test endpoint"
-    })
-})
 
-app.get("/books", (req, res) => {
+app.use("/api/chat", chatRoutes);
+
+// when u pass an array of middleware functions, they are executed in order
+// app.get("/video-calls", protectRoute, (req, res) => {
+//     res.status(200).json({
+//         message: "this is the test endpoint"
+//     })
+// })
+
+app.get("/health", (req, res) => {
     res.status(200).json({
-        message: "this is the books endpoint"
+        message: "api is up and running"
     })
 })
 
