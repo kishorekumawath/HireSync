@@ -25,5 +25,3 @@ export const deleteStreamUser = async (userId) => {
         console.error("Error deleting user:", error);
     }
 }
-
-export default chatClient;
