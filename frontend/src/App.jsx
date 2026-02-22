@@ -1,5 +1,5 @@
 
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router'
 import HomePage from './pages/HomePage.jsx'
 import ProblemsPage from './pages/ProblemsPage.jsx'
 import { useUser } from '@clerk/clerk-react'
