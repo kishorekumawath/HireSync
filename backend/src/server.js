@@ -8,6 +8,7 @@ import { inngest } from "./lib/inngest.js";
 import { functions } from "./lib/inngest.js";
 import { clerkMiddleware } from "@clerk/express";
 import chatRoutes from "./routes/chatRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/inngest', serve({ client: inngest, functions }));
 
 
 app.use("/api/chat", chatRoutes);
+app.use("/api/sessions", sessionRoutes);
 
 // when u pass an array of middleware functions, they are executed in order
 // app.get("/video-calls", protectRoute, (req, res) => {
