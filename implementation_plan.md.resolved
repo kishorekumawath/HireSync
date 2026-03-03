@@ -1,0 +1,152 @@
+# Self-Hosted Docker Code Execution Engine
+
+Replace the broken Piston public API with a secure, self-hosted execution pipeline.  
+User code is run inside a **ephemeral Docker container** spun up by the Node.js backend — isolated, time-limited, and with no external API dependency.
+
+## Architecture
+
+```
+React Frontend
+    ↓  POST /api/execute  { language, code }
+Node.js Backend  (new route + controller)
+    ↓  dockerode  (Node.js Docker SDK)
+Ephemeral Docker Container  (python / node / openjdk image)
+    ↓  stdout / stderr
+Backend returns  { success, output, error }
+    ↓
+React displays result
+```
+
+> [!IMPORTANT]
+> **Docker Desktop must be running** on the machine where the backend runs. Verify with `docker --version` before we start.
+
+---
+
+## Proposed Changes
+
+### Backend
+
+#### [NEW] `executeRoutes.js` — [NEW](file:///Users/kishorekumar/Documents/Projects/HireSync/backend/src/routes/executeRoutes.js)
+
+A single route, **no auth guard** (execution is stateless and sandboxed):
+
+```
+POST /api/execute
+Body: { language: "python" | "javascript" | "java", code: "..." }
+```
+
+---
+
+#### [NEW] `executeController.js` — [NEW](file:///Users/kishorekumar/Documents/Projects/HireSync/backend/src/controllers/executeController.js)
+
+Core logic using the `dockerode` npm package:
+
+| Step | What happens |
+|---|---|
+| 1 | Validate `language` and `code` |
+| 2 | Map language → Docker image + run command |
+| 3 | `docker.createContainer(...)` with `NetworkDisabled: true`, memory/CPU limits |
+| 4 | Write code to container's stdin or via bind-mount temp file |
+| 5 | Start container, collect stdout/stderr stream |
+| 6 | Kill + remove container after **5 second timeout** |
+| 7 | Return `{ success, output, error }` |
+
+**Docker image map:**
+
+| Language | Image | Run command |
+|---|---|---|
+| `javascript` | `node:18-alpine` | `node /code/main.js` |
+| `python` | `python:3.11-slim` | `python /code/main.py` |
+| `java` | `openjdk:17-slim` | `javac /code/Main.java && java -cp /code Main` |
+
+**Container security config:**
+```js
+{
+  NetworkDisabled: true,      // no internet access
+  Memory: 128 * 1024 * 1024, // 128 MB RAM cap
+  CpuQuota: 50000,            // 50% of 1 CPU
+  ReadonlyRootfs: false,      // need to write temp file
+  AutoRemove: true,           // auto-cleanup on exit
+}
+```
+
+---
+
+#### [MODIFY] [server.js](file:///Users/kishorekumar/Documents/Projects/HireSync/backend/src/server.js) — [server.js](file:///Users/kishorekumar/Documents/Projects/HireSync/backend/src/server.js)
+
+Register the new route (no auth middleware needed):
+```js
+import executeRoutes from "./routes/executeRoutes.js";
+app.use("/api/execute", executeRoutes);
+```
+
+---
+
+#### Install dependency
+
+```bash
+cd backend && npm install dockerode
+```
+
+---
+
+### Frontend
+
+#### [NEW] [codeExecution.js](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/lib/codeExecution.js) — [NEW](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/lib/codeExecution.js)
+
+Thin wrapper that calls the backend. Same `{ success, output, error }` shape as before, so [ProblemPage.jsx](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/pages/ProblemPage.jsx) needs **zero changes**.
+
+```js
+export async function executeCode(language, code) {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language, code }),
+  });
+  return res.json(); // { success, output, error }
+}
+```
+
+---
+
+#### [MODIFY] [ProblemPage.jsx](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/pages/ProblemPage.jsx) — [ProblemPage.jsx](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/pages/ProblemPage.jsx)
+
+Change one import line (currently broken pointing to [piston.js](file:///Users/kishorekumar/Documents/Projects/HireSync/frontend/src/lib/piston.js)):
+```diff
+- import { executeCode } from "../lib/piston.js";
++ import { executeCode } from "../lib/codeExecution.js";
+```
+
+---
+
+## Verification Plan
+
+### Prerequisites
+- Docker Desktop is running: `docker --version`
+- Backend dev server is running: `cd backend && npm run dev`
+- Frontend dev server is running: `cd frontend && npm run dev`
+
+### Manual Verification (Browser)
+
+1. Open `http://localhost:5173/problem/two-sum`
+2. Select **JavaScript** → click **Run Code** on the starter code → expect `[0,1]`, `[1,2]`, `[0,1]` in the output panel
+3. Select **Python** → click **Run Code** → expect same result
+4. Select **Java** → click **Run Code** → expect same result
+5. Write **intentionally broken code** (e.g. `print(undefined_var)` in Python) → expect an error message in the output panel, not a crash
+6. Open the **Network tab** in DevTools → confirm `POST /api/execute` returns `200` with `{ success: true, output: "..." }`
+
+### Backend Smoke Test (curl)
+
+```bash
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{"language":"python","code":"print(\"hello world\")"}'
+# Expected: {"success":true,"output":"hello world\n"}
+```
+
+```bash
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{"language":"javascript","code":"console.log(2+2)"}'
+# Expected: {"success":true,"output":"4\n"}
+```
