@@ -43,8 +43,8 @@ export async function createSession(req, res) {
         });
 
         await channel.create();
-
-        return res.status(201).json(session);
+        console.log("new session created");
+        return res.status(201).json({ session });
 
     } catch (error) {
         console.log("error in createSession controller", error);
@@ -56,8 +56,8 @@ export async function getActiveSessions(_, res) {
     try {
         const sessions = await Session.find({ status: "active" })
             .populate("host", "name profileImage email clerkId")
+            .populate("participant", "name profileImage email clerkId")
             .sort({ createdAt: -1 }).limit(20);
-
         return res.status(200).json(sessions);
     } catch (error) {
         console.log("error in getActiveSessions controller", error);
