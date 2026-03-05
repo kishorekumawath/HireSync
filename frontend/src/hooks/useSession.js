@@ -38,7 +38,6 @@ export const useSessionById = (id) => {
     enabled: !!id,
     refetchInterval: 5000, // refetch every 5 seconds to detect session status changes
   });
-
   return result;
 };
 
