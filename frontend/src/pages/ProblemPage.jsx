@@ -107,13 +107,21 @@ function ProblemPage() {
     };
 
     return (
-        <div className="h-screen bg-base-100 flex flex-col">
-            <Navbar />
+        <div className="h-screen bg-base-300 flex flex-col relative overflow-hidden transition-colors duration-500">
+             {/* DYNAMIC BACKGROUND */}
+             <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-primary/10 rounded-full animate-pulse blur-3xl" />
+                <div className="absolute bottom-[10%] right-[5%] w-[30%] h-[50%] bg-secondary/10 rounded-full animate-pulse delay-700 blur-3xl" />
+                <div className="absolute top-[40%] left-[20%] w-[50%] h-[30%] bg-accent/10 rounded-full animate-pulse delay-1000 blur-3xl" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+            </div>
 
-            <div className="flex-1">
-                <Group orientation="horizontal">
+            <Navbar className="relative z-10" />
+
+            <div className="flex-1 p-4 sm:p-6 lg:p-8 animate-fade-in-up transition-all relative z-10 overflow-hidden h-full flex mt-6 sm:mt-0">
+                <Group orientation="horizontal" className="h-full rounded-4xl overflow-hidden border border-base-content/10 bg-base-100/30 backdrop-blur-xl shadow-2xl">
                     {/* left panel- problem desc */}
-                    <Panel defaultSize={40} minSize={30}>
+                    <Panel defaultSize={40} minSize={30} className="rounded-l-4xl">
                         <ProblemDescription
                             problem={currentProblem}
                             currentProblemId={currentProblemId}
@@ -122,10 +130,12 @@ function ProblemPage() {
                         />
                     </Panel>
 
-                    <Separator className="w-2 bg-base-300 hover:bg-primary transition-colors cursor-col-resize" />
+                    <Separator className="w-1.5 bg-base-content/10 hover:bg-primary transition-all duration-300 cursor-col-resize group flex items-center justify-center">
+                        <div className="h-12 w-0.5 bg-base-content/20 group-hover:bg-primary-content transition-colors rounded-full" />
+                    </Separator>
 
                     {/* right panel- code editor & output */}
-                    <Panel defaultSize={60} minSize={30}>
+                    <Panel defaultSize={60} minSize={30} className="rounded-r-4xl">
                         <Group orientation="vertical">
                             {/* Top panel - Code editor */}
                             <Panel defaultSize={70} minSize={30}>
@@ -139,7 +149,9 @@ function ProblemPage() {
                                 />
                             </Panel>
 
-                            <Separator className="h-2 bg-base-300 hover:bg-primary transition-colors cursor-row-resize" />
+                            <Separator className="h-1.5 bg-base-content/10 hover:bg-primary transition-all duration-300 cursor-row-resize group flex items-center justify-center">
+                                <div className="w-12 h-0.5 bg-base-content/20 group-hover:bg-primary-content transition-colors rounded-full" />
+                            </Separator>
 
                             {/* Bottom panel - Output Panel*/}
 
@@ -150,6 +162,17 @@ function ProblemPage() {
                     </Panel>
                 </Group>
             </div>
+            
+            <style dangerouslySetInnerHTML={{__html: `
+                @keyframes fade-in-up {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in-up {
+                    animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    opacity: 0;
+                }
+            `}} />
         </div>
     );
 }
