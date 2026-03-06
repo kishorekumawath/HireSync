@@ -50,25 +50,36 @@ function DashboardPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-base-300">
+      <div className="min-h-screen bg-base-300 relative overflow-hidden transition-colors duration-500 flex flex-col">
+        {/* DYNAMIC BACKGROUND */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-[10%] -left-[10%] w-[30%] h-[40%] bg-primary/10 rounded-full animate-pulse blur-3xl" />
+          <div className="absolute top-[20%] right-[5%] w-[40%] h-[30%] bg-secondary/10 rounded-full animate-pulse delay-700 blur-3xl" />
+          <div className="absolute bottom-[0%] left-[20%] w-[50%] h-[40%] bg-accent/10 rounded-full animate-pulse delay-1000 blur-3xl" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+        </div>
+
         <Navbar />
-        <WelcomeSection onCreateSession={() => setShowCreateModal(true)} />
+        
+        <div className="relative z-10 flex-1 w-full">
+          <WelcomeSection onCreateSession={() => setShowCreateModal(true)} />
 
-        {/* Grid layout */}
-        <div className="container mx-auto px-6 pb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <StatsCards
-              activeSessionsCount={activeSessions.length}
-              recentSessionsCount={recentSessions.length}
-            />
-            <ActiveSessions
-              sessions={activeSessions}
-              isLoading={loadingActiveSessions}
-              isUserInSession={isUserInSession}
-            />
+          {/* Grid layout */}
+          <div className="container mx-auto px-6 pb-16 animate-fade-in-up [animation-delay:200ms]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <StatsCards
+                activeSessionsCount={activeSessions.length}
+                recentSessionsCount={recentSessions.length}
+              />
+              <ActiveSessions
+                sessions={activeSessions}
+                isLoading={loadingActiveSessions}
+                isUserInSession={isUserInSession}
+              />
+            </div>
+
+            <RecentSessions sessions={recentSessions} isLoading={loadingRecentSessions} />
           </div>
-
-          <RecentSessions sessions={recentSessions} isLoading={loadingRecentSessions} />
         </div>
       </div>
 
